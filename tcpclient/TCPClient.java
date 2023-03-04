@@ -25,9 +25,7 @@ public class TCPClient {
         public byte[] askServer(String hostname, int port, byte [] toServerBytes) throws IOException {
         byte[] fromServerBuffer = new byte[buffer_size];
         ByteArrayOutputStream received = new ByteArrayOutputStream();
-        System.out.printf("Connecting to %s:%s on new socket.\n", hostname, port);
             Socket cSocket = new Socket(hostname, port);
-            System.out.printf("Connected. Writing %s to outputstream\n", toServerBytes);
             //for (byte b : toServerBytes) {System.out.println(b);}
             int length = 0;
 
@@ -35,19 +33,16 @@ public class TCPClient {
                 cSocket.setSoTimeout(timeOutTime);
             cSocket.getOutputStream().write(toServerBytes, 0, toServerBytes.length);
             if(bool) cSocket.shutdownOutput();
-
             do {
+                length = cSocket.getInputStream().read(fromServerBuffer);
                 try{
-                    length = cSocket.getInputStream().read(fromServerBuffer);
                     if(length > 0){
                         //Returns incase the max limit has already been reached.
                         if(datalimit != null && length > datalimit - received.size()) length = datalimit- received.size();
                         received.write(Arrays.copyOf(fromServerBuffer, length));
                         amount_of_buffers++;}
                     if(datalimit != null && received.size() >= datalimit ){
-                        System.out.println(received.size());
                         cSocket.close();
-                        System.out.printf("Datalimit of %s reached, closing connection.", datalimit );
                         return received.toByteArray();
                     }
                 }
@@ -69,8 +64,6 @@ public class TCPClient {
             if(timeOutTime != null)
                 cSocket.close();
 
-            System.out.printf("%d of buffers %d buffersize sent/received.\n", amount_of_buffers, buffer_size);
-            System.out.println("\n___________________DATA_RECEIVED___________________\n");
         return received.toByteArray();
         }
     public byte[] askServer(String hostname, int port) throws IOException {
