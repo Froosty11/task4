@@ -2,6 +2,7 @@ import tcpclient.TCPClient;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -33,16 +34,15 @@ public class RunnableAsk implements Runnable{
         try {
             byte[] received;
             String recString;
-            byte[] request = receiveRequest(this.sock);
-            String s = new String(request, StandardCharsets.UTF_8);
-            String[] lines = s.split("\n");
+            String request = receiveRequest(this.sock);
+            String[] lines = request.split("\n");
             //trim the string to remove ask and http ending info
-            s = lines[0];
+            request = lines[0];
 
-            if (s.startsWith("GET /ask?")) {
-                s = s.substring(9);
-                if (s.length() > 5 && s.substring(s.length()-9).equals("HTTP/1.1\r")) {
-                    setParameters(s.substring(0, s.length()-10));
+            if (request.startsWith("GET /ask?")) {
+                request = request.substring(9);
+                if (request.length() > 5 && request.substring(request.length()-9).equals("HTTP/1.1\r")) {
+                    setParameters(request.substring(0, request.length()-10));
                     if (hostname != null && port != null) {
                         TCPClient tcpClient = new TCPClient(shutdown, time_limit, data_limit);
                         if (sendString == null) sendString = "";
@@ -61,7 +61,7 @@ public class RunnableAsk implements Runnable{
                 } else {
                     badRequestResponse(sock);
                 }
-            } else if(s.startsWith("GET")) {
+            } else if(request.startsWith("GET")) {
                 notFoundResponse(sock, "\n");
             }
             else{
@@ -81,19 +81,16 @@ public class RunnableAsk implements Runnable{
      * @return bytes that come in.
      * @throws IOException can throw ioexception incase socket is closed or data limited or similar.
      */
-    private byte[] receiveRequest(Socket cSocket) throws IOException{
-        byte[] fromServerBuffer = new byte[buffer_size];
-        ByteArrayOutputStream received = new ByteArrayOutputStream();
-        //for (byte b : toServerBytes) {System.out.println(b);}
-        int length = 0;
-        //TODO: FIX THIS FOR MORE THAN ONE PACKET
-        //do {
-        length = cSocket.getInputStream().read(fromServerBuffer);
-        if(length > 0){
-            received.write(Arrays.copyOf(fromServerBuffer, length));
-            amount_of_buffers++;}
-        //} while(length != -1 && !cSocket.isClosed());
-        return received.toByteArray();
+    private String receiveRequest(Socket cSocket) throws IOException{
+        InputStream in = cSocket.getInputStream();
+        byte[] buffer = new byte[buffer_size];
+        StringBuilder reply = new StringBuilder();
+        int read = 0;
+        while (!cSocket.isClosed() && (read = in.read(buffer)) != -1)
+        {
+            reply.append(new String(buffer, 0, read, StandardCharsets.UTF_8));
+        }
+        return reply.toString();
     }
     /**
      * Not found response. This happens incase not /ask? is defined and/or if the website requested doesnt respond.
