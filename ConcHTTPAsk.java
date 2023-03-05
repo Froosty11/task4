@@ -17,7 +17,7 @@ public class ConcHTTPAsk {
         }
         int id = 0;
             while(ss != null){
-                System.out.printf("Client %d", id++);
+                System.out.printf("Client %d\n", id++);
                 Socket sock = ss.accept();
                 (new Thread(new RunnableAsk(sock), String.valueOf(id))).start();
 
