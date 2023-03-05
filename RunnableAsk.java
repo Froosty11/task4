@@ -1,18 +1,15 @@
 import tcpclient.TCPClient;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 public class RunnableAsk implements Runnable{
     Socket sock;
     int buffer_size = 2048;
-    int amount_of_buffers = 0;
-    String hostname = "";
+    String hostname;
     Integer data_limit;
     Integer time_limit;
     Integer port;
@@ -41,7 +38,7 @@ public class RunnableAsk implements Runnable{
 
             if (request.startsWith("GET /ask?")) {
                 request = request.substring(9);
-                if (request.length() > 5 && request.substring(request.length()-9).equals("HTTP/1.1\r")) {
+                if (request.endsWith("HTTP/1.1\r")) {
                     setParameters(request.substring(0, request.length()-10));
                     if (hostname != null && port != null) {
                         TCPClient tcpClient = new TCPClient(shutdown, time_limit, data_limit);
@@ -85,7 +82,7 @@ public class RunnableAsk implements Runnable{
         InputStream in = cSocket.getInputStream();
         byte[] buffer = new byte[buffer_size];
         StringBuilder reply = new StringBuilder();
-        int read = 0;
+        int read;
         while (!cSocket.isClosed() && (read = in.read(buffer)) != -1)
         {
             reply.append(new String(buffer, 0, read, StandardCharsets.UTF_8));
@@ -122,7 +119,7 @@ public class RunnableAsk implements Runnable{
 
     /**
      * Could've used URL parsing that already exists but want to give my self a challenge
-     * @param parameters
+     * @param parameters for the fucking thing
      */
     private void setParameters(String parameters) {
         String[] par = parameters.split("&");
@@ -131,24 +128,12 @@ public class RunnableAsk implements Runnable{
             if (s.contains("=")) {
                 String[] oneParameter = s.split("=");
                 switch (oneParameter[0]) {
-                    case "hostname":
-                        hostname = oneParameter[1];
-                        break;
-                    case "limit":
-                        data_limit = Integer.parseInt(oneParameter[1]);
-                        break;
-                    case "port":
-                        port = Integer.parseInt(oneParameter[1]);
-                        break;
-                    case "string":
-                        sendString = oneParameter[1];
-                        break;
-                    case "shutdown":
-                        shutdown = Boolean.parseBoolean(oneParameter[1]);
-                        break;
-                    case "timeout":
-                        time_limit = Integer.parseInt(oneParameter[1]);
-                        break;
+                    case "hostname" -> hostname = oneParameter[1];
+                    case "limit" -> data_limit = Integer.parseInt(oneParameter[1]);
+                    case "port" -> port = Integer.parseInt(oneParameter[1]);
+                    case "string" -> sendString = oneParameter[1];
+                    case "shutdown" -> shutdown = Boolean.parseBoolean(oneParameter[1]);
+                    case "timeout" -> time_limit = Integer.parseInt(oneParameter[1]);
                 }
             }
         }
