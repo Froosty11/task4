@@ -86,6 +86,9 @@ public class RunnableAsk implements Runnable{
         while (!cSocket.isClosed() && (read = in.read(buffer)) != -1)
         {
             reply.append(new String(buffer, 0, read, StandardCharsets.UTF_8));
+            if (reply.toString().endsWith("\n")) {
+                break;
+            }
         }
         return reply.toString();
     }
@@ -128,12 +131,12 @@ public class RunnableAsk implements Runnable{
             if (s.contains("=")) {
                 String[] oneParameter = s.split("=");
                 switch (oneParameter[0]) {
-                    case "hostname" -> hostname = oneParameter[1];
-                    case "limit" -> data_limit = Integer.parseInt(oneParameter[1]);
-                    case "port" -> port = Integer.parseInt(oneParameter[1]);
-                    case "string" -> sendString = oneParameter[1];
-                    case "shutdown" -> shutdown = Boolean.parseBoolean(oneParameter[1]);
-                    case "timeout" -> time_limit = Integer.parseInt(oneParameter[1]);
+                    case "hostname": hostname = oneParameter[1]; break;
+                    case "limit": data_limit = Integer.parseInt(oneParameter[1]); break;
+                    case "port": port = Integer.parseInt(oneParameter[1]); break;
+                    case "string": sendString = oneParameter[1]; break;
+                    case "shutdown": shutdown = Boolean.parseBoolean(oneParameter[1]); break;
+                    case "timeout": time_limit = Integer.parseInt(oneParameter[1]); break;
                 }
             }
         }

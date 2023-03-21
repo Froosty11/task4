@@ -22,56 +22,48 @@ public class TCPClient {
         this.datalimit = datalimit;
         //this.lastAccessMS = System.currentTimeMillis();
     }
-        public byte[] askServer(String hostname, int port, String toserver) throws IOException {
+    public byte[] askServer(String hostname, int port, String toserver) throws IOException {
         byte[] fromServerBuffer = new byte[buffer_size];
         ByteArrayOutputStream received = new ByteArrayOutputStream();
-            Socket cSocket = new Socket(hostname, port);
-            //for (byte b : toServerBytes) {System.out.println(b);}
-            int length = 0;
-
-            if(timeOutTime != null)
-                cSocket.setSoTimeout(timeOutTime);
-            OutputStream ou = cSocket.getOutputStream();
-            ou.write(toserver.getBytes(StandardCharsets.UTF_8));
-            if(bool) cSocket.shutdownOutput();
-            do {
-                try{
-                    InputStream input = cSocket.getInputStream();
-                    length = input.read(fromServerBuffer);
-                    //length = cSocket.getInputStream().read(fromServerBuffer);
-                    if(length > 0){
-                        //Returns incase the max limit has already been reached.
-                        if(datalimit != null && length > datalimit - received.size()) length = datalimit- received.size();
-                        received.write(Arrays.copyOf(fromServerBuffer, length));
-                        amount_of_buffers++;}
-                    if(datalimit != null && received.size() >= datalimit ){
-                        cSocket.close();
-                        return received.toByteArray();
-                    }
+        Socket cSocket = new Socket(hostname, port);
+        //for (byte b : toServerBytes) {System.out.println(b);}
+        int length = 0;
+        if(timeOutTime != null)
+            cSocket.setSoTimeout(timeOutTime);
+        OutputStream ou = cSocket.getOutputStream();
+        ou.write(toserver.getBytes(StandardCharsets.UTF_8));
+        if(bool) cSocket.shutdownOutput();
+        do {
+            try{
+                //fuck it i added this
+                if (received.toString().endsWith("\n")) {
+                    break;
                 }
-                catch (SocketTimeoutException so){
+                InputStream input = cSocket.getInputStream();
+                length = input.read(fromServerBuffer);
+                if(length > 0){
+                    //Returns incase the max limit has already been reached.
+                    if(datalimit != null && length > datalimit - received.size()) length = datalimit- received.size();
+                    received.write(Arrays.copyOf(fromServerBuffer, length));
+                    amount_of_buffers++;}
+                if(datalimit != null && received.size() >= datalimit ){
                     cSocket.close();
                     return received.toByteArray();
                 }
-                catch (IOException ioe){
-                    ioe.printStackTrace();
-                }
-
-
-                // Returns if the last time access is too long ago. Basically if the answers are taking too long.
-                // deprecated to try and fix 2
-                /*if(timeOutTime != null && System.currentTimeMillis() > lastAccessMS + timeOutTime){
-                    cSocket.close();
-                    System.out.printf("Timelimit of %s reached, closing connection.", timeOutTime );
-                    return received.toByteArray();
-                }*/
-            } while(!cSocket.isClosed() && length != -1 );
-            //lastAccessMS = System.currentTimeMillis();
-            if(timeOutTime != null)
+            }
+            catch (SocketTimeoutException so){
                 cSocket.close();
-
+                return received.toByteArray();
+            }
+            catch (IOException ioe){
+                ioe.printStackTrace();
+            }
+        } while(length != -1 );
+        //lastAccessMS = System.currentTimeMillis();
+        if(timeOutTime != null)
+            cSocket.close();
         return received.toByteArray();
-        }
+    }
     public byte[] askServer(String hostname, int port) throws IOException {
         return new byte[0];
     }
